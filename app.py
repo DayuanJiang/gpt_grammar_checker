@@ -73,13 +73,16 @@ def style_text(diff):
 
 if __name__=="__main__":
     st.title("日本語文書校正アシスタント")
-    st.write("使うモデル：gpt-3.5-turbo")
-    orig_txt = st.text_area("Input Text", height=300
+    option = st.selectbox(
+        '使うモデルを選択してください',
+        ("gpt-3.5-turbo", 'gpt-4')
+    )
+    orig_txt = st.text_area("Input Text", height=200
     )
     fixed_txt = ""
     if orig_txt:
         output = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model=option,
         messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt.format(passage=orig_txt)},
@@ -100,5 +103,4 @@ if __name__=="__main__":
         st.write("Text Diff")
         diff = compare_string(orig_txt, fixed_txt)
         fullText = style_text(diff)
-        st.write("\n\n")
         st.write(fullText, unsafe_allow_html=True)
