@@ -2,4 +2,3 @@ streamlit
 python-dotenv
 openai
 langdetect
-dotenv
