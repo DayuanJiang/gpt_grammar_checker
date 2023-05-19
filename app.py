@@ -113,6 +113,7 @@ if __name__=="__main__":
     st.title("文章校正アシスタント")
     st.write("文章を入力すると、文法や誤字脱字を修正してくれます。")
     st.write("日本語と英語をサポートしています。自動的に言語を判定します。")
+    st.markdown("blog: <http://www.jiang.jp/posts/20230518_grammar_checker/>")
     option = st.selectbox(
         '使うモデルを選択してください',
         ("gpt-3.5-turbo", 'gpt-4')
