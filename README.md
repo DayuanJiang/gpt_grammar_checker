@@ -1,4 +1,4 @@
-# GPT日本語校正ツール
+# GPT文書校正ツール
 
 GPT Grammar Checkerは、OpenAIのGPT-3.5-turboまたはGPT-4モデルを使用して日本語と英語の文書を校正するためのアシスタントツールです。Streamlitを使ってWebアプリとして構築されています。
 
