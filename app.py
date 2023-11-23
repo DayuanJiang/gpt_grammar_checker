@@ -10,6 +10,10 @@ import dotenv
 import os
 
 dotenv.load_dotenv()
+openai.api_type = os.getenv("OPENAI_API_TYPE")
+openai.api_base = os.getenv("OPENAI_API_BASE")
+openai.api_version = os.getenv("OPENAI_API_VERSION")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 system_prompt = """
@@ -117,7 +121,7 @@ if __name__=="__main__":
     st.markdown("github: <https://github.com/DayuanJiang/gpt_grammar_checker>")
     option = st.selectbox(
         '使うモデルを選択してください',
-        ("gpt-3.5-turbo", 'gpt-4')
+        ( 'gpt4-turbo')
     )
     orig_txt = st.text_area("Input Text", height=200)
     fixed_txt = ""
@@ -138,6 +142,7 @@ if __name__=="__main__":
                 {"role": "user", "content": selected_prompt.format(passage=orig_txt)},
             ],
         stream=True,
+        temperature=0,
         )
         st.write("---")
         st.write("Fixed Text")
