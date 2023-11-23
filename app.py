@@ -6,15 +6,21 @@ from langdetect import detect
 
 
 import openai
+from openai import AzureOpenAI
+import os
 import dotenv
 import os
 
 dotenv.load_dotenv()
-openai.api_type = os.getenv("OPENAI_API_TYPE")
-openai.api_base = os.getenv("OPENAI_API_BASE")
-openai.api_version = os.getenv("OPENAI_API_VERSION")
-openai.api_key = os.getenv("OPENAI_API_KEY")
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = AzureOpenAI(
+    api_version=os.getenv("OPENAI_API_VERSION"),
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+)
+
+
+# TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=os.getenv("OPENAI_API_BASE"))'
+# openai.api_base = os.getenv("OPENAI_API_BASE")
+
 
 system_prompt = """
 """
@@ -55,7 +61,7 @@ prompt = """
 
 english_prompt = """
 You are an assistant tasked with proofreading documents.
-Under the premise of not changing the meaning, correct the provided text and output the revision.
+Under the premise of not changing the meaning, correct the provided text and output the revision while trying your best to maintain the original structure of my words.
 Please keep any words written in a language other than English as they are.
 The key points for revision are as follows:
 
@@ -89,7 +95,8 @@ class Action(Enum):
     DELETION = -1
     EQUAL = 0
 
-def compare_string(text1:str, text2: str) -> list:
+
+def compare_string(text1: str, text2: str) -> list:
     text1Normalized = unicodedata.normalize("NFKC", text1)
     text2Normalized = unicodedata.normalize("NFKC", text2)
 
@@ -99,8 +106,9 @@ def compare_string(text1:str, text2: str) -> list:
 
     return diff
 
+
 def style_text(diff):
-    fullText=""
+    fullText = ""
     for action, text in diff:
         if action == Action.INSERTION.value:
             fullText += f"<span style='background-color:Lightgreen'>{text}</span>"
@@ -110,19 +118,17 @@ def style_text(diff):
             fullText += f"{text}"
         else:
             raise Exception("Not Implemented")
-    fullText = fullText.replace('](', ']\(').replace('~', '\~')
+    fullText = fullText.replace("](", "]\(").replace("~", "\~")
     return fullText
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     st.title("GPT文章校正アシスタント")
     st.write("文章を入力すると、文法や誤字脱字を修正してくれます。")
     st.write("日本語と英語をサポートしています。自動的に言語を判定します。")
     st.markdown("blog: <http://www.jiang.jp/posts/20230518_grammar_checker/>")
     st.markdown("github: <https://github.com/DayuanJiang/gpt_grammar_checker>")
-    option = st.selectbox(
-        '使うモデルを選択してください',
-        ( 'gpt4-turbo')
-    )
+    option = st.selectbox("使うモデルを選択してください", (["gpt4-turbo"]))
     orig_txt = st.text_area("Input Text", height=200)
     fixed_txt = ""
     if orig_txt:
@@ -134,26 +140,27 @@ if __name__=="__main__":
         else:
             st.write("日本語か英語を入力してください")
             st.stop()
-        
-        output = openai.ChatCompletion.create(
-        model=option,
-        messages=[
+
+        output = client.chat.completions.create(
+            model=option,
+            messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": selected_prompt.format(passage=orig_txt)},
             ],
-        stream=True,
-        temperature=0,
+            stream=True,
+            temperature=0,
         )
         st.write("---")
         st.write("Fixed Text")
         result_area = st.empty()
-        
-        
+
         fixed_txt = ""
         for chunk in output:
-            next = chunk['choices'][0]['delta'].get('content', '')
-            fixed_txt += next
-            result_area.write(fixed_txt)                        
+            if len(chunk.choices) > 0:
+                if chunk.choices[0].delta.content is not None:
+                    next = chunk.choices[0].delta.content
+                    fixed_txt += str(next)
+                    result_area.write(fixed_txt)
         st.write("---")
         st.write("Text Diff")
         diff = compare_string(orig_txt, fixed_txt)
